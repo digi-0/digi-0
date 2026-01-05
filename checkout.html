@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Checkout</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- CSS HERE -->
-  <style>
-body { margin:0; font-family:Arial,sans-serif; background:#f5f5f5; }
+<title>Checkout</title>
+
+<style>
+body { margin:0; font-family:Arial,sans-serif; background:#f4f4f4; }
 
 .navbar {
     background:#111;
@@ -14,52 +15,173 @@ body { margin:0; font-family:Arial,sans-serif; background:#f5f5f5; }
     justify-content:space-between;
     align-items:center;
     padding:12px 20px;
-    position:sticky;
-    top:0;
+}
+.navbar a { color:#fff; text-decoration:none; margin-left:15px; }
+
+.container {
+    max-width:900px;
+    margin:20px auto;
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
 }
 
-.nav-links a {
-    color:#fff;
-    text-decoration:none;
-    margin-left:15px;
+.section {
+    margin-bottom:25px;
+}
+.section h3 {
+    border-bottom:2px solid #eee;
+    padding-bottom:5px;
 }
 
-.container { padding:20px; }
+/* Order Summary */
+.summary-item {
+    display:flex;
+    justify-content:space-between;
+    margin:8px 0;
+}
+.total {
+    font-size:18px;
+    font-weight:bold;
+}
 
-button {
-    padding:6px 12px;
-    border:none;
+/* Forms */
+input, select {
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    border:1px solid #ccc;
     border-radius:5px;
-    cursor:pointer;
 }
 
-.primary { background:#28a745; color:white; }
-.danger { background:#dc3545; color:white; }
+/* Payment */
+.payment-box label {
+    display:block;
+    margin:8px 0;
+}
 
-  </style>
+/* Trust */
+.trust {
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    font-size:14px;
+    color:#555;
+}
+
+/* Buttons */
+.btn-primary {
+    background:#28a745;
+    color:#fff;
+    border:none;
+    padding:12px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:16px;
+}
+.btn-primary:hover { background:#218838; }
+
+.note {
+    font-size:13px;
+    color:#666;
+}
+</style>
 </head>
+
 <body>
 
 <!-- NAVBAR -->
-<!-- paste navbar here -->
-
-  <div class="navbar">
-    <div class="logo">📱 Wallpaper Store</div>
-    <div class="nav-links">
+<div class="navbar">
+    <div>📱 Wallpaper Store</div>
+    <div>
         <a href="home.html">Home</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
         <a href="privacy.html">Privacy</a>
-        <a href="cart.html">🛒 Cart (<span id="cart-count">0</span>)</a>
+        <a href="cart.html">🛒 Cart</a>
     </div>
 </div>
 
-
 <div class="container">
-    <h2>Checkout</h2>
-    <p>Complete payment to download wallpapers.</p>
-    <p><strong>Payment Method:</strong> Khalti / QR (Next step)</p>
+
+    <!-- ORDER SUMMARY -->
+    <div class="section">
+        <h3>Order Summary</h3>
+        <div id="order-summary"></div>
+        <p class="total">Total: NPR <span id="total">0</span></p>
+    </div>
+
+    <!-- CUSTOMER INFO -->
+    <div class="section">
+        <h3>Customer Information</h3>
+        <input type="text" placeholder="Full Name" required>
+        <input type="email" placeholder="Email Address" required>
+    </div>
+
+    <!-- SHIPPING -->
+    <div class="section">
+        <h3>Shipping Options</h3>
+        <select>
+            <option>Digital Download (Instant) – NPR 0</option>
+            <option>USB Delivery (Nepal) – NPR 150 (3–5 days)</option>
+        </select>
+        <p class="note">Most customers choose instant digital delivery.</p>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="section">
+        <h3>Payment Method</h3>
+        <div class="payment-box">
+            <label><input type="radio" name="pay" checked> Khalti QR</label>
+            <label><input type="radio" name="pay"> eSewa</label>
+            <label><input type="radio" name="pay"> Card (Visa / MasterCard)</label>
+        </div>
+    </div>
+
+    <!-- TRUST & SECURITY -->
+    <div class="section">
+        <h3>Security & Trust</h3>
+        <div class="trust">
+            <div>🔒 SSL Secured Checkout</div>
+            <div>✅ 100% Secure Payments</div>
+            <div>⭐ Trusted by 1,000+ users</div>
+            <div>📄 No data stored</div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="section">
+        <button class="btn-primary" onclick="placeOrder()">Place Order</button>
+        <p class="note">You’ll be redirected to payment confirmation.</p>
+    </div>
+
 </div>
+
+<script>
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let summary = document.getElementById("order-summary");
+let total = 0;
+
+cart.forEach(item => {
+    total += item.price * item.qty;
+    summary.innerHTML += `
+        <div class="summary-item">
+            <span>${item.name} × ${item.qty}</span>
+            <span>NPR ${item.price * item.qty}</span>
+        </div>
+    `;
+});
+
+document.getElementById("total").innerText = total;
+
+function placeOrder(){
+    if(cart.length === 0){
+        alert("Your cart is empty");
+        return;
+    }
+    window.location.href = "order-success.html";
+}
+</script>
 
 </body>
 </html>
