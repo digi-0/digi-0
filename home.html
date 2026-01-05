@@ -1,184 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
+<title>Home</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wallpaper Store</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-}
-
-/* NAVBAR */
-.navbar {
-    position: sticky;
-    top: 0;
-    background: #111;
-    color: #fff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    z-index: 1000;
-}
-.navbar a {
-    color: #fff;
-    text-decoration: none;
-    margin-left: 15px;
-}
-.navbar span {
-    font-weight: bold;
-}
-
-/* PRODUCTS */
-.products {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 15px;
-    padding: 20px;
-}
-.product {
-    background: #fff;
-    border-radius: 10px;
-    padding: 10px;
-    text-align: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.product img {
-    width: 100%;
-    height: 280px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-.product h4 {
-    margin: 8px 0 5px;
-}
-.product p {
-    margin: 5px 0;
-    font-weight: bold;
-}
-.product button {
-    background: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.product button:hover {
-    background: #218838;
-}
-
-/* CART */
-#cart {
-    position: fixed;
-    right: 10px;
-    top: 70px;
-    width: 260px;
-    background: #fff;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-#cart h3 {
-    margin-top: 0;
-}
-#cart ul {
-    padding-left: 15px;
-}
-
-/* FOOTER */
-footer {
-    background: #111;
-    color: #fff;
-    text-align: center;
-    padding: 15px;
-    margin-top: 30px;
-}
-</style>
+<!-- CSS HERE -->
 </head>
-
 <body>
 
 <!-- NAVBAR -->
-<div class="navbar">
-    <span>📱 Wallpaper Store</span>
+<!-- paste navbar here -->
+
+<div class="container">
+    <h2>Phone Wallpapers</h2>
+
     <div>
-        <a href="#">Home</a>
-        <a href="#products">Wallpapers</a>
-        <a href="#cart">Cart (<span id="cart-count">0</span>)</a>
+        <p>AMOLED Dark – NPR 50</p>
+        <button class="primary" onclick="addToCart('AMOLED Dark',50)">Add to Cart</button>
+    </div>
+
+    <div>
+        <p>Lord Shiva – NPR 60</p>
+        <button class="primary" onclick="addToCart('Lord Shiva',60)">Add to Cart</button>
     </div>
 </div>
-
-<!-- PRODUCTS -->
-<div id="products" class="products">
-
-    <div class="product">
-        <img src="https://via.placeholder.com/400x700?text=Wallpaper+1">
-        <h4>AMOLED Dark</h4>
-        <p>NPR 50</p>
-        <button onclick="addToCart('AMOLED Dark', 50)">Buy</button>
-    </div>
-
-    <div class="product">
-        <img src="https://via.placeholder.com/400x700?text=Wallpaper+2">
-        <h4>Nature HD</h4>
-        <p>NPR 40</p>
-        <button onclick="addToCart('Nature HD', 40)">Buy</button>
-    </div>
-
-    <div class="product">
-        <img src="https://via.placeholder.com/400x700?text=Wallpaper+3">
-        <h4>Lord Shiva</h4>
-        <p>NPR 60</p>
-        <button onclick="addToCart('Lord Shiva', 60)">Buy</button>
-    </div>
-
-    <div class="product">
-        <img src="https://via.placeholder.com/400x700?text=Wallpaper+4">
-        <h4>Minimal Art</h4>
-        <p>NPR 30</p>
-        <button onclick="addToCart('Minimal Art', 30)">Buy</button>
-    </div>
-
-</div>
-
-<!-- CART -->
-<div id="cart">
-    <h3>🛒 Cart</h3>
-    <ul id="cart-items"></ul>
-    <p><strong>Total: NPR <span id="cart-total">0</span></strong></p>
-</div>
-
-<!-- FOOTER -->
-<footer>
-    © 2026 Wallpaper Store • Digital Products Only
-</footer>
 
 <script>
-let cart = [];
-let total = 0;
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 function addToCart(name, price) {
-    cart.push({name, price});
-    total += price;
-    updateCart();
+    let item = cart.find(i => i.name === name);
+    if(item) item.qty++;
+    else cart.push({name, price, qty:1});
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    updateCount();
 }
 
-function updateCart() {
-    const items = document.getElementById("cart-items");
-    items.innerHTML = "";
-    cart.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item.name + " - NPR " + item.price;
-        items.appendChild(li);
-    });
-    document.getElementById("cart-total").textContent = total;
-    document.getElementById("cart-count").textContent = cart.length;
+function updateCount(){
+    document.getElementById("cart-count").innerText =
+        cart.reduce((a,b)=>a+b.qty,0);
 }
+updateCount();
 </script>
 
 </body>
