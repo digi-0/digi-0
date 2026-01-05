@@ -106,6 +106,10 @@ document.getElementById("name").innerText = order.customer.name;
 document.getElementById("email").innerText = order.customer.email;
 document.getElementById("delivery").innerText = order.delivery;
 document.getElementById("payment").innerText = order.payment;
+document.getElementById("payMethod").innerText = order.payment.method;
+document.getElementById("payPhone").innerText = order.payment.phone;
+document.getElementById("payTxn").innerText = order.payment.transactionId;
+
 
 let itemsBox = document.getElementById("items");
 order.cart.forEach(item => {
