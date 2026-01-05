@@ -1,1 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmation</title>
+
+<style>
+body { margin:0; font-family:Arial,sans-serif; background:#f4f4f4; }
+
+.navbar {
+    background:#111;
+    color:#fff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 20px;
+}
+.navbar a { color:#fff; text-decoration:none; margin-left:15px; }
+
+.container {
+    max-width:900px;
+    margin:20px auto;
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+}
+
+.section { margin-bottom:25px; }
+.section h3 { border-bottom:2px solid #eee; padding-bottom:5px; }
+
+.row {
+    display:flex;
+    justify-content:space-between;
+    margin:6px 0;
+}
+
+.total { font-size:18px; font-weight:bold; }
+.success { color:green; font-weight:bold; }
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div>📱 Wallpaper Store</div>
+    <div>
+        <a href="home.html">Home</a>
+        <a href="cart.html">Cart</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <p class="success">✅ Order placed successfully</p>
+
+    <!-- ORDER INFO -->
+    <div class="section">
+        <h3>Order Information</h3>
+        <p><strong>Order ID:</strong> <span id="orderId"></span></p>
+        <p><strong>Date:</strong> <span id="date"></span></p>
+    </div>
+
+    <!-- ORDER SUMMARY -->
+    <div class="section">
+        <h3>Order Summary</h3>
+        <div id="items"></div>
+        <p class="total">Total: NPR <span id="total"></span></p>
+    </div>
+
+    <!-- CUSTOMER -->
+    <div class="section">
+        <h3>Customer Information</h3>
+        <p><strong>Name:</strong> <span id="name"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+    </div>
+
+    <!-- DELIVERY -->
+    <div class="section">
+        <h3>Delivery Method</h3>
+        <p id="delivery"></p>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="section">
+        <h3>Payment Method</h3>
+        <p id="payment"></p>
+    </div>
+
+</div>
+
+<script>
+const order = JSON.parse(localStorage.getItem("orderData"));
+
+if (!order) {
+    alert("No order found");
+    window.location.href = "home.html";
+}
+
+// Render order
+document.getElementById("orderId").innerText = order.orderId;
+document.getElementById("date").innerText = order.createdAt;
+document.getElementById("total").innerText = order.total;
+document.getElementById("name").innerText = order.customer.name;
+document.getElementById("email").innerText = order.customer.email;
+document.getElementById("delivery").innerText = order.delivery;
+document.getElementById("payment").innerText = order.payment;
+
+let itemsBox = document.getElementById("items");
+order.cart.forEach(item => {
+    itemsBox.innerHTML += `
+        <div class="row">
+            <span>${item.name} × ${item.qty}</span>
+            <span>NPR ${item.price * item.qty}</span>
+        </div>
+    `;
+});
+</script>
+
+</body>
+</html>
 
