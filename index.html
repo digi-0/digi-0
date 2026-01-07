@@ -1,55 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>ACN Coin Flip</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
+<meta charset="UTF-8">
+<title>ACN Coin Flip DApp</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #0a0a0a, #1c1c1c);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px;
+    }
+    h1 { color: #ffcc00; }
+    .button {
+        padding: 12px 30px;
+        margin: 10px;
+        font-size: 18px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .button:hover { transform: scale(1.05); }
+    .heads { background-color: #1e90ff; color: white; }
+    .tails { background-color: #ff4500; color: white; }
+    .ownerButton { background-color: #32cd32; color: white; }
+    #status { margin-top: 20px; font-size: 16px; }
+    input { padding: 10px; width: 180px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
+    #coin { width: 150px; height: 150px; margin-top: 20px; }
+    #history { margin-top: 20px; }
+    .flipItem { margin: 5px 0; }
+</style>
 </head>
 <body>
 
-<h2>🪙 ACN Coin Flip (Celo)</h2>
+<h1>🪙 ACN Coin Flip</h1>
 
-<input type="number" id="amount" placeholder="Bet ACN">
-<br><br>
+<p>Wallet: <span id="wallet">Not Connected</span></p>
+<p>ACN Balance: <span id="balance">0</span></p>
 
-<button onclick="play(0)">Heads</button>
-<button onclick="play(1)">Tails</button>
+<button class="button" onclick="connectWallet()">Connect Wallet</button>
+
+<div style="margin-top: 20px;">
+    <input type="number" id="betAmount" placeholder="Bet Amount (ACN)">
+</div>
+
+<div style="margin-top: 20px;">
+    <button class="button heads" onclick="flip(0)">🟦 Heads</button>
+    <button class="button tails" onclick="flip(1)">🟥 Tails</button>
+</div>
+
+<img id="coin" src="" alt="" style="display:none;">
 
 <p id="status"></p>
 
+<div id="withdrawDiv" style="display:none; margin-top:30px;">
+    <h3>Owner Controls</h3>
+    <input type="number" id="withdrawAmount" placeholder="Amount to withdraw">
+    <button class="button ownerButton" onclick="withdraw()">Withdraw ACN</button>
+</div>
+
+<div id="history">
+    <h3>Last 5 Flips:</h3>
+    <div id="flipHistory"></div>
+</div>
+
 <script>
-const contractAddress = "YOUR_COINFLIP_CONTRACT";
-const abi = [
-  "function flip(uint betAmount, uint choice)"
+let provider, signer, userAddress;
+let acnContract, coinFlipContract;
+
+const acnTokenAddress = "0xc06FFAc05c8408D547E625002e9633c91063070F"; // Your ACN token
+const coinFlipAddress = "YOUR_COINFLIP_CONTRACT_ADDRESS"; // Replace with deployed CoinFlip contract
+
+const acnAbi = [
+    "function approve(address spender, uint amount) external returns (bool)",
+    "function balanceOf(address owner) external view returns (uint256)"
 ];
 
-async function play(choice) {
-  if (!window.ethereum) {
-    alert("Install MetaMask");
-    return;
-  }
+const coinFlipAbi = [
+    "function flip(uint amount, uint choice) external",
+    "function withdraw(uint amount) external",
+    "function owner() view returns (address)"
+];
 
-  await ethereum.request({ method: "eth_requestAccounts" });
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+let flipHistory = [];
 
-  const contract = new ethers.Contract(contractAddress, abi, signer);
-  const amount = document.getElementById("amount").value;
+// Connect wallet function
+async function connectWallet() {
+    if (window.ethereum) {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        userAddress = await signer.getAddress();
+        document.getElementById("wallet").innerText = userAddress;
 
-  try {
-    const tx = await contract.flip(
-      ethers.parseUnits(amount, 18),
-      choice
-    );
-    document.getElementById("status").innerText = "⏳ Flipping...";
-    await tx.wait();
-    document.getElementById("status").innerText = "✅ Done!";
-  } catch (e) {
-    document.getElementById("status").innerText = "❌ Failed";
-  }
+        acnContract = new ethers.Contract(acnTokenAddress, acnAbi, signer);
+        coinFlipContract = new ethers.Contract(coinFlipAddress, coinFlipAbi, signer);
+
+        updateBalance();
+        checkOwner();
+    } else {
+        alert("MetaMask not found!");
+    }
+}
+
+// Update ACN balance
+async function updateBalance() {
+    if (!acnContract || !userAddress) return;
+    const balance = await acnContract.balanceOf(userAddress);
+    document.getElementById("balance").innerText = ethers.formatUnits(balance, 18);
+}
+
+// Flip function with animation
+async function flip(choice) {
+    const amount = document.getElementById("betAmount").value;
+    if (!amount || amount <= 0) { alert("Enter valid amount"); return; }
+
+    const amountParsed = ethers.parseUnits(amount, 18);
+
+    try {
+        // Approve first
+        let approveTx = await acnContract.approve(coinFlipAddress, amountParsed);
+        await approveTx.wait();
+
+        // Flip
+        let tx = await coinFlipContract.flip(amountParsed, choice);
+        document.getElementById("status").innerText = "⏳ Flipping...";
+        await tx.wait();
+
+        // Randomly display coin animation
+        let result = Math.random() < 0.5 ? 0 : 1; // temporary visual
+        displayCoin(result);
+
+        // Update history
+        let win = (result === Number(choice));
+        flipHistory.unshift({choice, result, win});
+        if(flipHistory.length>5) flipHistory.pop();
+        renderHistory();
+
+        updateBalance();
+        document.getElementById("status").innerText = win ? "🎉 You Won!" : "😢 You Lost!";
+    } catch(err) {
+        console.error(err);
+        document.getElementById("status").innerText = "❌ Transaction failed!";
+    }
+}
+
+// Coin animation
+function displayCoin(result){
+    const coin = document.getElementById("coin");
+    coin.style.display = "block";
+    coin.src = result === 0 ? "https://i.imgur.com/9Q6yGxF.png" : "https://i.imgur.com/8i8z2IW.png"; // Heads / Tails images
+}
+
+// Check if owner
+async function checkOwner() {
+    const owner = await coinFlipContract.owner();
+    if (owner.toLowerCase() === userAddress.toLowerCase()) {
+        document.getElementById("withdrawDiv").style.display = "block";
+    }
+}
+
+// Withdraw (owner)
+async function withdraw() {
+    const amount = document.getElementById("withdrawAmount").value;
+    if (!amount || amount <= 0) { alert("Enter valid amount"); return; }
+
+    const amountParsed = ethers.parseUnits(amount, 18);
+
+    try {
+        const tx = await coinFlipContract.withdraw(amountParsed);
+        await tx.wait();
+        document.getElementById("status").innerText = "✅ Withdraw successful!";
+        updateBalance();
+    } catch(err) {
+        console.error(err);
+        document.getElementById("status").innerText = "❌ Withdraw failed!";
+    }
+}
+
+// Render last 5 flips
+function renderHistory() {
+    const container = document.getElementById("flipHistory");
+    container.innerHTML = "";
+    flipHistory.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "flipItem";
+        div.innerText = `Choice: ${f.choice===0?'Heads':'Tails'}, Result: ${f.result===0?'Heads':'Tails'}, ${f.win?'Win 🎉':'Lose 😢'}`;
+        container.appendChild(div);
+    });
 }
 </script>
 
 </body>
 </html>
-
-  
