@@ -1,78 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="https://unpkg.com/@walletconnect/ethereum-provider@2.9.0/dist/index.umd.js"></script>
-
-  <title>ACN Tap & Earn</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: Arial; text-align: center; background: #0b1220; color: white; }
-    button { font-size: 20px; padding: 15px; margin: 10px; }
-  </style>
+  <title>ACN Coin Flip</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
 </head>
 <body>
-  
-  <button onclick="connectWallet()">Connect MetaMask</button>
-<p id="walletAddress">Not connected</p>
 
+<h2>🪙 ACN Coin Flip (Celo)</h2>
 
-<h1>ACN Tap & Earn</h1>
-<p>Score: <span id="score">0</span></p>
+<input type="number" id="amount" placeholder="Bet ACN">
+<br><br>
 
-<button onclick="tap()">TAP</button>
-<br>
-<button onclick="connectWallet()">Connect Wallet</button>
-<br>
-<button onclick="claim()">Claim ACN</button>
+<button onclick="play(0)">Heads</button>
+<button onclick="play(1)">Tails</button>
+
+<p id="status"></p>
 
 <script>
-let score = 0;
+const contractAddress = "YOUR_COINFLIP_CONTRACT";
+const abi = [
+  "function flip(uint betAmount, uint choice)"
+];
 
-function tap() {
-  score++;
-  document.getElementById("score").innerText = score;
-}
+async function play(choice) {
+  if (!window.ethereum) {
+    alert("Install MetaMask");
+    return;
+  }
 
-function connectWallet() {
-  alert("WalletConnect integration here (Valora / MetaMask)");
-}
+  await ethereum.request({ method: "eth_requestAccounts" });
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
 
-function claim() {
-  alert("You earned " + score + " points = ACN tokens");
-}
-</script>
+  const contract = new ethers.Contract(contractAddress, abi, signer);
+  const amount = document.getElementById("amount").value;
 
-<script>
-let provider;
-let userAccount;
-
-async function connectWallet() {
-  provider = await window.WalletConnectEthereumProvider.init({
-    projectId: "YOUR_WALLETCONNECT_PROJECT_ID",
-    chains: [42220], // CELO MAINNET
-    methods: ["eth_sendTransaction", "eth_sign"],
-    events: ["chainChanged", "accountsChanged"],
-    showQrModal: true,
-    metadata: {
-      name: "ACN Tap & Earn",
-      description: "Earn ACN tokens by playing",
-      url: "https://yourgame.site",
-      icons: ["https://yourgame.site/logo.png"]
-    }
-  });
-
-  await provider.enable();
-
-  const accounts = await provider.request({ method: "eth_accounts" });
-  userAccount = accounts[0];
-
-  document.getElementById("walletAddress").innerText =
-    "Connected: " + userAccount;
+  try {
+    const tx = await contract.flip(
+      ethers.parseUnits(amount, 18),
+      choice
+    );
+    document.getElementById("status").innerText = "⏳ Flipping...";
+    await tx.wait();
+    document.getElementById("status").innerText = "✅ Done!";
+  } catch (e) {
+    document.getElementById("status").innerText = "❌ Failed";
+  }
 }
 </script>
-
-
 
 </body>
 </html>
 
+  
